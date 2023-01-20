@@ -23,7 +23,7 @@ final class ScriptingTests: XCTestCase {
 
     func testCat() async throws {
         var string = ""
-        await "hello" | Command("/bin/cat") > string
+        await "hello" | "/bin/cat" > string
         XCTAssertEqual(string, "hello")
     }
 }

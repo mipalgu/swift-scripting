@@ -32,6 +32,17 @@ public extension Command {
     }
 }
 
+/// Convenience extension.
+extension Command: ExpressibleByStringLiteral {
+    /// Initialise a command from a string.
+    /// - Parameter value: The command to parse and its arguments.
+    @inlinable
+    public init(stringLiteral value: String) {
+        self.init(value)
+    }
+
+}
+
 /// Executable conformance
 extension Command: Executable {
     /// Launch the underlying command.
