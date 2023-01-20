@@ -2,10 +2,17 @@ import XCTest
 @testable import Scripting
 
 final class ScriptingTests: XCTestCase {
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        XCTAssertEqual(Scripting().text, "Hello, World!")
+    func testPathSearch() {
+        if #available(macOS 13.0, *) {
+            XCTAssertEqual(search(for: "ls", in: "/bin")?.path(percentEncoded: false), "/bin/ls")
+        } else {
+            XCTAssertEqual(search(for: "ls", in: "/bin")?.path, "/bin/ls")
+        }
+    }
+
+    func testHello() throws {
+        var string = ""
+        ShellCommand("/bin/echo", arguments: ["hello"]) > string
+        XCTAssertEqual(string, "hello\n")
     }
 }
