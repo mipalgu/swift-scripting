@@ -25,7 +25,7 @@ public func search(for command: String, in searchPath: String) -> URL? {
         let cmdURL: URL
         let cmdPath: String
 #if os(Linux)
-        directoryURL = URL(fileURLWithPath: cwd, isDirectory: true)
+        directoryURL = URL(fileURLWithPath: searchDirectory, isDirectory: true)
         cmdURL = directoryURL.appendingPathComponent(command, isDirectory: false)
         cmdPath = cmdURL.path
 #else
