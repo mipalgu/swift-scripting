@@ -5,6 +5,7 @@
 //  Created by Rene Hexel on 21/1/2023.
 //
 import Foundation
+import SystemPackage
 
 /// Abstract representation of an executable command.
 public protocol Executable {
@@ -62,20 +63,18 @@ public protocol Executable {
 
 /// Default implementation of convenience methods
 public extension Executable {
-    /// Run, providing the given input data.
-    ///
-    /// This will run the underlying executable,
-    /// providing the given input data as standard input.
+    /// Set up a callback providing the given input data.
     ///
     /// - Parameter input: The input data to provide.
-    @inlinable
-    func run(input: Data) async throws {
+    /// - Returns: The receiver.
+    @inlinable @discardableResult
+    func provide(input: Data) -> Self {
         var inputData: Data? = input
         onInput {
             defer { inputData = nil }
             return inputData
         }
-        try await run()
+        return self
     }
     /// Run, returning both standad output and standard error data.
     ///
@@ -134,6 +133,16 @@ public extension Executable {
         try await run()
         return data
     }
+    /// Run, providing the given input string.
+    ///
+    /// This will run the underlying executable,
+    /// providing the given input string as standard input.
+    ///
+    /// - Parameter input: The input to provide.
+    @inlinable
+    func provide(input: String) throws -> Self {
+        try fromString(input, provide(input:))
+    }
     /// Run, returning both standad output and standard error data as a string.
     ///
     /// This will run the underlying executable and return
@@ -181,7 +190,6 @@ public extension Executable {
     }
 }
 
-
 /// Call the given method and convert its output to a string.
 /// - Parameter call: The method to call.
 /// - Throws: This method will throw if the called method throws.
@@ -191,4 +199,17 @@ func asString(_ call: () async throws -> Data) async throws -> String {
     let outputData = try await call()
     let string = String(data: outputData, encoding: .utf8) ?? String(data: outputData, encoding: .utf16) ?? ""
     return string
+}
+
+/// Convert the given string to data and call the given method.
+/// - Parameter call: The method to call.
+/// - Throws: This method will throw if the called method throws.
+/// - Returns: The data returned by `call()` converted to a string.
+@usableFromInline @discardableResult
+func fromString<T>(_ string: String, _ call: (Data) throws -> T) throws -> T {
+    guard let data = string.data(using: .utf8, allowLossyConversion: true) else {
+        throw Errno.invalidArgument
+    }
+    let output = try call(data)
+    return output
 }

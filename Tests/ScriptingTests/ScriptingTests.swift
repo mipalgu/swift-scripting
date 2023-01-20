@@ -21,9 +21,9 @@ final class ScriptingTests: XCTestCase {
         XCTAssertEqual(string, "hello\n")
     }
 
-//    func testCat() async throws {
-//        var string = ""
-//        await ShellCommand("/bin/cat") < "hello" > string
-//        XCTAssertEqual(string, "hello")
-//    }
+    func testCat() async throws {
+        var string = ""
+        await "hello" | Command("/bin/cat") > string
+        XCTAssertEqual(string, "hello")
+    }
 }

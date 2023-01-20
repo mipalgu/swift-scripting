@@ -23,12 +23,7 @@ public extension Command {
     @discardableResult
     static func < (_ command: Command, _ inputData: Data) async -> Command {
         if case .error(_) = command { return command }
-        do {
-            try await command.run(input: inputData)
-        } catch {
-            return .error(error)
-        }
-        return command
+        return command.provide(input: inputData)
     }
     /// Run the given shell command and append its output
     /// to the given data.

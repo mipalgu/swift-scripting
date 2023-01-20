@@ -180,6 +180,7 @@ extension ShellCommand: Executable {
                 if let inputHandler = inputHandler,
                    let stdin = standardInput?.fileHandleForWriting {
                     Task.detached {
+                        defer { try? stdin.close() }
                         while let data = try await inputHandler() {
                             if #available(macOS 10.15.4, *) {
                                 try stdin.write(contentsOf: data)
