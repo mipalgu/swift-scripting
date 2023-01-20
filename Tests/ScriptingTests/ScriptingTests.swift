@@ -1,3 +1,9 @@
+//
+//  ScriptingTests.swift
+//
+//  Copyright © 2023 Rene Hexel.  All rights reserved.
+//  Created by Rene Hexel on 20/1/2023.
+//
 import XCTest
 @testable import Scripting
 
@@ -17,7 +23,7 @@ final class ScriptingTests: XCTestCase {
 
     func testHello() async throws {
         var string = ""
-        await Command("/bin/echo", arguments: ["hello"]) > string
+        await "/bin/echo hello" > string
         XCTAssertEqual(string, "hello\n")
     }
 

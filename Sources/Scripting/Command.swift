@@ -1,7 +1,7 @@
 //
-//  Executable.swift
+//  Command.swift
 //  
-//
+//  Copyright © 2023 Rene Hexel.  All rights reserved.
 //  Created by Rene Hexel on 21/1/2023.
 //
 import Foundation
@@ -38,7 +38,8 @@ extension Command: ExpressibleByStringLiteral {
     /// - Parameter value: The command to parse and its arguments.
     @inlinable
     public init(stringLiteral value: String) {
-        self.init(value)
+        let arguments = parse(command: value)
+        self.init(arguments[0], arguments: Array(arguments[1...]))
     }
 
 }
