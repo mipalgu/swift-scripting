@@ -32,4 +32,10 @@ final class ScriptingTests: XCTestCase {
         await "echo hello" | "cat" > string
         XCTAssertEqual(string, "hello\n")
     }
+
+    func testSed() async throws {
+        var string = ""
+        await "echo no" | "sed -e s/no/yes/" | "cat" > string
+        XCTAssertEqual(string, "yes\n")
+    }
 }
