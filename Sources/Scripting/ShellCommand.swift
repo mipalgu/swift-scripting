@@ -100,7 +100,6 @@ public final class ShellCommand {
             process.environment = environment
         }
         let launchPath = path.string
-        process.launchPath = launchPath
         process.executableURL = URL(fileURLWithPath: launchPath, isDirectory: false)
         process.arguments = arguments
         process.terminationHandler = { [weak self] process in
@@ -130,11 +129,15 @@ public extension ShellCommand {
         let searchPath = environment?["PATH"] ?? ProcessInfo.processInfo.environment["PATH"] ?? ""
         let searchResult = search(for: command, in: searchPath)
         let fullCommand: String
+#if os(Linux)
+        fullCommand = searchResult?.path ?? command
+#else
         if #available(macOS 13.0, *) {
             fullCommand = searchResult?.path(percentEncoded: false) ?? command
         } else {
             fullCommand = searchResult?.path ?? command
         }
+#endif
         let fullPath = FilePath(fullCommand)
         self.init(path: fullPath, environment: environment, arguments: arguments)
     }
