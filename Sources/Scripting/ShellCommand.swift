@@ -25,8 +25,25 @@ public final class ShellCommand {
     /// The current status of the process.
     public var isRunning = false
     /// The underlying process to run.
-    @usableFromInline
-    var process = Process()
+    @usableFromInline var process = Process()
+    /// The standard output pipe for the Process
+    @usableFromInline var standardOutput: Pipe?
+    /// The standard error pipe for the Process
+    @usableFromInline var standardError: Pipe?
+    /// Process output handler.
+    ///
+    /// This handler runs in the background and is called whenever
+    /// the process produces output.
+    ///
+    /// - Note: set to `nil` to disable output handling.
+    @usableFromInline var onOutput: ((FileHandle) -> Void)?
+    /// Process error handler.
+    ///
+    /// This handler runs in the background and is called whenever
+    /// the process produces errors.
+    ///
+    /// - Note: set to `nil` to disable error handling.
+    @usableFromInline var onError:  ((FileHandle) -> Void)?
 
     /// Initialise the shell command from a file path.
     ///
@@ -46,19 +63,6 @@ public final class ShellCommand {
         self.environment = environment
     }
 
-    /// Run a shell command.
-    @discardableResult @inlinable
-    public func run() -> Result<Status, Error> {
-        Result(catching: run)
-    }
-
-
-    /// Run a shell command.
-    @discardableResult @inlinable
-    public func run() throws -> Status {
-        Task { try await run() }
-        return terminationStatus
-    }
 
     /// Asynchronously run a shell command.
     @discardableResult @inlinable
@@ -110,6 +114,22 @@ public final class ShellCommand {
                 try? self?.setupProcess()
             }
         }
+        if let outputHandler = onOutput {
+            let pipe = Pipe()
+            pipe.fileHandleForReading.readabilityHandler = outputHandler
+            standardOutput = pipe
+        }
+        if let pipe = standardOutput {
+            process.standardOutput = pipe
+        }
+        if let errortHandler = onError {
+            let pipe = Pipe()
+            pipe.fileHandleForReading.readabilityHandler = errortHandler
+            standardError = pipe
+        }
+        if let pipe = standardOutput {
+            process.standardError = pipe
+        }
     }
 }
 
@@ -143,6 +163,8 @@ public extension ShellCommand {
     }
 }
 
+extension Data: Sendable {}
+
 /// Convenience Operators
 public extension ShellCommand {
     /// Run the given shell command and redirect its output
@@ -151,8 +173,25 @@ public extension ShellCommand {
     /// - Parameters:
     ///   - command: The command to execute.
     ///   - outputString: The string that should be filled with the output of the command.
-    @discardableResult @inlinable
-    static func > (_ command: ShellCommand, _ outputString: inout String) -> Result<Status, Error> {
-        command.run()
+    /// - Returns: The result of executing the command.
+    @discardableResult
+    static func > (_ command: ShellCommand, _ outputString: inout String) async -> Result<Status, Error> {
+        var data = Data()
+        command.onOutput = { fileHandle in
+            data.append(fileHandle.availableData)
+        }
+        let status: Status
+        do {
+            status = try await command.run()
+        } catch {
+            return .failure(error)
+        }
+        if let fileHandle = command.standardOutput?.fileHandleForReading {
+            data.append(fileHandle.availableData)
+        }
+        if let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .utf16) {
+            outputString = string
+        }
+        return .success(status)
     }
 }
