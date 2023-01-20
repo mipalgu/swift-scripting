@@ -21,15 +21,15 @@ final class ScriptingTests: XCTestCase {
 #endif
     }
 
-    func testHello() async throws {
+    func testEcho() async throws {
         var string = ""
-        await "/bin/echo hello" > string
+        await "echo hello" > string
         XCTAssertEqual(string, "hello\n")
     }
 
     func testCat() async throws {
         var string = ""
-        await "hello" | "/bin/cat" > string
-        XCTAssertEqual(string, "hello")
+        await "echo hello" | "cat" > string
+        XCTAssertEqual(string, "hello\n")
     }
 }
