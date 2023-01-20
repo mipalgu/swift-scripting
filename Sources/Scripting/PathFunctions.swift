@@ -1,7 +1,7 @@
 //
-//  FilPathFunctionse.swift
+//  FilPathFunctions.swift
 //  
-//  Copyright © 2022, 2023 Rene Hexel.  All rights reserved.
+//  Copyright © 2023 Rene Hexel.  All rights reserved.
 //  Created by Rene Hexel on 20/1/2023.
 //
 import Foundation

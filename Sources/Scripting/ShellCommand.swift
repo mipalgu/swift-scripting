@@ -66,7 +66,23 @@ public final class ShellCommand {
 
     /// Asynchronously run a shell command.
     @discardableResult @inlinable
-    public func run() async throws -> Status {
+    public func run(onOutput: ((Data) async -> Void)? = nil, onError: ((Data) async -> Void)? = nil) async throws -> Status {
+        if let outputHandler = onOutput {
+            self.onOutput = { fileHandle in
+                let data = fileHandle.availableData
+                Task { @MainActor in
+                    await outputHandler(data)
+                }
+            }
+        }
+        if let errorHandler = onError {
+            self.onError = { fileHandle in
+                let data = fileHandle.availableData
+                Task { @MainActor in
+                    await errorHandler(data)
+                }
+            }
+        }
         try setupProcess()
         let process = self.process
         terminationStatus = try await withCheckedThrowingContinuation { continuation in
@@ -160,38 +176,5 @@ public extension ShellCommand {
 #endif
         let fullPath = FilePath(fullCommand)
         self.init(path: fullPath, environment: environment, arguments: arguments)
-    }
-}
-
-extension Data: Sendable {}
-
-/// Convenience Operators
-public extension ShellCommand {
-    /// Run the given shell command and redirect its output
-    /// to the string.
-    ///
-    /// - Parameters:
-    ///   - command: The command to execute.
-    ///   - outputString: The string that should be filled with the output of the command.
-    /// - Returns: The result of executing the command.
-    @discardableResult
-    static func > (_ command: ShellCommand, _ outputString: inout String) async -> Result<Status, Error> {
-        var data = Data()
-        command.onOutput = { fileHandle in
-            data.append(fileHandle.availableData)
-        }
-        let status: Status
-        do {
-            status = try await command.run()
-        } catch {
-            return .failure(error)
-        }
-        if let fileHandle = command.standardOutput?.fileHandleForReading {
-            data.append(fileHandle.availableData)
-        }
-        if let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .utf16) {
-            outputString = string
-        }
-        return .success(status)
     }
 }
