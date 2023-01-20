@@ -26,24 +26,33 @@ public final class ShellCommand {
     public var isRunning = false
     /// The underlying process to run.
     @usableFromInline var process = Process()
+    /// The standard input pipe for the Process
+    @usableFromInline var standardInput: Pipe?
     /// The standard output pipe for the Process
     @usableFromInline var standardOutput: Pipe?
     /// The standard error pipe for the Process
     @usableFromInline var standardError: Pipe?
+    /// Process input handler.
+    ///
+    /// This handler runs in the background and is called whenever
+    /// the process produces output.
+    ///
+    /// - Note: set to `nil` to disable output handling.
+    @usableFromInline var inputHandler: (() async throws -> Data?)?
     /// Process output handler.
     ///
     /// This handler runs in the background and is called whenever
     /// the process produces output.
     ///
     /// - Note: set to `nil` to disable output handling.
-    @usableFromInline var onOutput: ((FileHandle) -> Void)?
+    @usableFromInline var outputHandler: ((Data) async -> Void)?
     /// Process error handler.
     ///
     /// This handler runs in the background and is called whenever
     /// the process produces errors.
     ///
     /// - Note: set to `nil` to disable error handling.
-    @usableFromInline var onError:  ((FileHandle) -> Void)?
+    @usableFromInline var errorHandler: ((Data) async -> Void)?
 
     /// Initialise the shell command from a file path.
     ///
@@ -61,42 +70,6 @@ public final class ShellCommand {
         self.path = path
         self.arguments = arguments
         self.environment = environment
-    }
-
-
-    /// Asynchronously run a shell command.
-    @discardableResult @inlinable
-    public func run(onOutput: ((Data) async -> Void)? = nil, onError: ((Data) async -> Void)? = nil) async throws -> Status {
-        if let outputHandler = onOutput {
-            self.onOutput = { fileHandle in
-                let data = fileHandle.availableData
-                Task { @MainActor in
-                    await outputHandler(data)
-                }
-            }
-        }
-        if let errorHandler = onError {
-            self.onError = { fileHandle in
-                let data = fileHandle.availableData
-                Task { @MainActor in
-                    await errorHandler(data)
-                }
-            }
-        }
-        try setupProcess()
-        let process = self.process
-        terminationStatus = try await withCheckedThrowingContinuation { continuation in
-            process.terminationHandler = { process in
-                continuation.resume(returning: process.terminationStatus)
-            }
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
-        }
-        terminationReason = process.terminationReason
-        return terminationStatus
     }
 
     /// Launch the process associated with the shell command.
@@ -130,20 +103,29 @@ public final class ShellCommand {
                 try? self?.setupProcess()
             }
         }
-        if let outputHandler = onOutput {
-            let pipe = Pipe()
-            pipe.fileHandleForReading.readabilityHandler = outputHandler
-            standardOutput = pipe
+        if let pipe = standardInput {
+            process.standardInput = pipe
         }
         if let pipe = standardOutput {
+            if let outputHandler = outputHandler {
+                pipe.fileHandleForReading.readabilityHandler = { fileHandle in
+                    let data = fileHandle.availableData
+                    Task { @MainActor in
+                        await outputHandler(data)
+                    }
+                }
+            }
             process.standardOutput = pipe
         }
-        if let errortHandler = onError {
-            let pipe = Pipe()
-            pipe.fileHandleForReading.readabilityHandler = errortHandler
-            standardError = pipe
-        }
-        if let pipe = standardOutput {
+        if let pipe = standardError {
+            if let errorHandler = errorHandler {
+                pipe.fileHandleForReading.readabilityHandler = { fileHandle in
+                    let data = fileHandle.availableData
+                    Task { @MainActor in
+                        await errorHandler(data)
+                    }
+                }
+            }
             process.standardError = pipe
         }
     }
@@ -176,5 +158,135 @@ public extension ShellCommand {
 #endif
         let fullPath = FilePath(fullCommand)
         self.init(path: fullPath, environment: environment, arguments: arguments)
+    }
+}
+
+extension ShellCommand: Executable {
+    /// Asynchronously run a shell command.
+    ///
+    /// This program will launch the command and wait for the process to complete.
+    ///
+    /// - Returns: The exit status of the process.
+    @discardableResult @inlinable
+    public func run() async throws -> Status {
+        try setupProcess()
+        let process = self.process
+        try await withCheckedThrowingContinuation { continuation in
+            process.terminationHandler = { process in
+                continuation.resume(returning: ())
+            }
+            do {
+                try launch()
+                if let inputHandler = inputHandler,
+                   let stdin = standardInput?.fileHandleForWriting {
+                    Task.detached {
+                        while let data = try await inputHandler() {
+                            if #available(macOS 10.15.4, *) {
+                                try stdin.write(contentsOf: data)
+                            } else {
+                                stdin.write(data)
+                            }
+                        }
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+        process.waitUntilExit()
+        terminationStatus = process.terminationStatus
+        terminationReason = process.terminationReason
+        if let outputHandler = self.outputHandler,
+           let fileHandle = standardOutput?.fileHandleForReading {
+            let data: Data?
+            if #available(macOS 10.15.4, *) {
+                data = try fileHandle.readToEnd()
+            } else {
+                data = fileHandle.readDataToEndOfFile()
+            }
+            if let data = data {
+                await outputHandler(data)
+            }
+        }
+        if let errorHandler = self.errorHandler,
+           let fileHandle = standardError?.fileHandleForReading {
+            let data: Data?
+            if #available(macOS 10.15.4, *) {
+                data = try fileHandle.readToEnd()
+            } else {
+                data = fileHandle.readDataToEndOfFile()
+            }
+            if let data = data {
+                await errorHandler(data)
+            }
+        }
+        return terminationStatus
+    }
+    /// Register an input handler.
+    ///
+    /// The input handler is asynchronous
+    /// and provides data whenever available.
+    /// The handler needs to be called repeatedly,
+    /// until it returns `nil`.
+    ///
+    /// - Note: multiple input handlers can be chained
+    ///         by calling this method repeatedly.
+    ///
+    /// - Parameter inputHandler: The input handler to run.
+    @inlinable
+    public func onInput(_ inputHandler: @escaping () async throws -> Data?) {
+        guard let oldHandler = self.inputHandler else {
+            standardInput = Pipe()
+            self.inputHandler = inputHandler
+            return
+        }
+        self.inputHandler = {
+            if let data = try await oldHandler() { return data }
+            return try await inputHandler()
+        }
+    }
+    /// Register an output handler.
+    ///
+    /// The output handler takes data
+    /// and gets called whenever the
+    /// standard output channel has data
+    /// available.
+    ///
+    /// - Note: multiple output handlers can be chained
+    ///         by calling this method repeatedly.
+    ///
+    /// - Parameter outputHandler: The output handler to run.
+    public func onOutput(call outputHandler: @escaping (Data) async -> Void) {
+        guard let oldHandler = self.outputHandler else {
+            standardOutput = Pipe()
+            self.outputHandler = outputHandler
+            return
+        }
+        self.outputHandler = {
+            await oldHandler($0)
+            await outputHandler($0)
+        }
+    }
+    /// Register an error handler.
+    ///
+    /// The output handler takes data
+    /// and gets called whenever the
+    /// standard error channel has data
+    /// available.
+    ///
+    /// - Note: multiple error handlers can be chained
+    ///         by calling this method repeatedly.
+    ///
+    /// - Parameter errorHandler: The error handler to run.
+    public func onError(call errorHandler: @escaping (Data) async -> Void) {
+        guard let oldHandler = self.errorHandler else {
+            standardError = Pipe()
+            self.errorHandler = errorHandler
+            return
+        }
+        self.errorHandler = {
+            await oldHandler($0)
+            await errorHandler($0)
+        }
     }
 }
