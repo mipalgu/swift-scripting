@@ -3,11 +3,16 @@ import XCTest
 
 final class ScriptingTests: XCTestCase {
     func testPathSearch() {
+        let result = search(for: "ls", in: "/bin")
+#if os(Linux)
+        XCTAssertEqual(result?.path, "/bin/ls")
+#else
         if #available(macOS 13.0, *) {
-            XCTAssertEqual(search(for: "ls", in: "/bin")?.path(percentEncoded: false), "/bin/ls")
+            XCTAssertEqual(result?.path(percentEncoded: false), "/bin/ls")
         } else {
-            XCTAssertEqual(search(for: "ls", in: "/bin")?.path, "/bin/ls")
+            XCTAssertEqual(result?.path, "/bin/ls")
         }
+#endif
     }
 
     func testHello() throws {
