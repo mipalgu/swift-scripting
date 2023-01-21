@@ -8,6 +8,10 @@ import Foundation
 import SystemPackage
 
 /// An executable shell command.
+///
+/// A `ShellCommand` references an underlying Process,
+/// its associated file path, ccommand line arguments,
+/// environment, pipes, and I/O handlers.
 public final class ShellCommand {
     /// The full file path of the command.
     public var path: FilePath
