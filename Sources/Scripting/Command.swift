@@ -8,8 +8,19 @@ import Foundation
 
 /// An executable script command.
 ///
-/// This command represents a
+/// This command references an executable
 /// command and its execution state.
+///
+/// The execution state either represents
+/// a reference to the executable itself or
+/// an error state.  Any operation performed
+/// on an error state will do nothing, but
+/// preserve the error state.
+///
+/// - Note: Executables usually have reference
+/// semantics, so copying a Command will
+/// **not** give you a new executable value,
+/// just a reference to an existing executable.
 public enum Command {
     /// The shell command underlying this command.
     case executable(Executable)
