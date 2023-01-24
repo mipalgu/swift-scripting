@@ -9,6 +9,12 @@ import SystemPackage
 
 /// Abstract representation of an executable command.
 public protocol Executable {
+    /// The standard input I/O handle of the executable.
+    var standardInput: IOHandle? { get set }
+    /// The standard output I/O handle of the executable.
+    var standardOutput: IOHandle? { get set }
+    /// The standard error I/O handle of the executable.
+    var standardError: IOHandle? { get set }
     /// Launch the underlying command.
     ///
     /// This method will start the command,

@@ -28,14 +28,14 @@ public final class ShellCommand {
     public var terminationReason = Process.TerminationReason.exit
     /// The current status of the process.
     public var isRunning = false
+    /// The standard input handle for the Process
+    public var standardInput: IOHandle?
+    /// The standard output handle for the Process
+    public var standardOutput: IOHandle?
+    /// The standard error handle for the Process
+    public var standardError: IOHandle?
     /// The underlying process to run.
     @usableFromInline var process = Process()
-    /// The standard input handle for the Process
-    @usableFromInline var standardInput: IOHandle?
-    /// The standard output handle for the Process
-    @usableFromInline var standardOutput: IOHandle?
-    /// The standard error handle for the Process
-    @usableFromInline var standardError: IOHandle?
     /// The standard input pipe for the Process.
     @usableFromInline var inputPipe: Pipe? {
         get { return standardInput as? Pipe }
@@ -122,9 +122,7 @@ public final class ShellCommand {
                 try? self?.setupProcess()
             }
         }
-        if let pipe = standardInput {
-            process.standardInput = pipe
-        }
+        process.standardInput = pipe
         process.standardOutput = standardOutput
         if let pipe = outputPipe {
             if let outputHandler = outputHandler {

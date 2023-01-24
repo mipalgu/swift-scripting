@@ -26,6 +26,33 @@ public extension Command {
         if case .error(_) = command { return command }
         return command.provide(input: inputData)
     }
+
+    /// Run the given shell command and redirect its input
+    /// from the given file.
+    ///
+    /// - Parameters:
+    ///   - command: The command to execute.
+    ///   - inputFile: The file providing the input of the command.
+    /// - Returns: The result of executing the command.
+    @discardableResult
+    static func < (_ command: Command, _ inputFile: FileIO) async -> Command {
+        switch command {
+        case .error(_):
+            return command
+        case let .executable(executable):
+            guard let shellCommand = executable as? ShellCommand else { return .error(Errno.notSupported) }
+            do {
+                try inputFile.open(mode: .read)
+                guard let handle = inputFile.handle else { return .error(Errno.noSuchFileOrDirectory) }
+                shellCommand.standardInput = handle
+                try await command.run()
+            } catch {
+                return .error(error)
+            }
+        }
+        return command
+    }
+
     /// Run the given shell command and append its output
     /// to the given data.
     ///

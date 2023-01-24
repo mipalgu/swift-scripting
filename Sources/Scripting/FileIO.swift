@@ -156,6 +156,24 @@ public extension FileIO {
 
 /// Executable conformance.
 extension FileIO: Executable {
+    /// The file handle represented as standard input.
+    public var standardInput: IOHandle? {
+        get { handle }
+        set { handle = newValue as? FileHandle }
+    }
+
+    /// The file handle represented as standard output.
+    public var standardOutput: IOHandle? {
+        get { handle }
+        set { handle = newValue as? FileHandle }
+    }
+
+    /// The file handle represented as standard error.
+    public var standardError: IOHandle? {
+        get { handle }
+        set { handle = newValue as? FileHandle }
+    }
+
     /// Launch file I/O.
     ///
     /// This call will commence file operations in the background.
@@ -250,5 +268,15 @@ extension FileIO: Executable {
         } else {
             self.errorHandler = errorHandler
         }
+    }
+}
+
+/// Confirming File I/O to `ExpressibleByStringLiteral`.
+extension FileIO: ExpressibleByStringLiteral {
+    /// String literal initialiser.
+    /// - Parameter stringLiteral: A string literal representing the file path.
+    @inlinable
+    public convenience init(stringLiteral filePath: String) {
+        self.init(filePath)
     }
 }

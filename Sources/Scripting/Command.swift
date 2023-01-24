@@ -67,6 +67,45 @@ extension Command: ExpressibleByStringLiteral {
 
 /// Executable conformance
 extension Command: Executable {
+    /// The standard input file handle of the command.
+    @inlinable public var standardInput: IOHandle? {
+        get {
+            guard case let .executable(executable) = self else { return nil }
+            return executable.standardInput
+        }
+        set {
+            guard case var .executable(executable) = self else { return }
+            executable.standardInput = newValue
+            self = .executable(executable)
+        }
+    }
+
+    /// The standard output file handle of the command.
+    @inlinable public var standardOutput: IOHandle? {
+        get {
+            guard case let .executable(executable) = self else { return nil }
+            return executable.standardOutput
+        }
+        set {
+            guard case var .executable(executable) = self else { return }
+            executable.standardOutput = newValue
+            self = .executable(executable)
+        }
+    }
+
+    /// The standard error file handle of the command.
+    @inlinable public var standardError: IOHandle? {
+        get {
+            guard case let .executable(executable) = self else { return nil }
+            return executable.standardError
+        }
+        set {
+            guard case var .executable(executable) = self else { return }
+            executable.standardError = newValue
+            self = .executable(executable)
+        }
+    }
+
     /// Launch the underlying command.
     ///
     /// This method will start the command,
