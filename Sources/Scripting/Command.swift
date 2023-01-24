@@ -41,6 +41,16 @@ public extension Command {
         let shellCommand = ShellCommand(command, environment: environment, arguments: arguments)
         self = .executable(shellCommand)
     }
+
+    /// Initialise a Shell command from a file.
+    ///
+    /// - Parameters:
+    ///   - file: The file represented by the receiver.
+    @inlinable
+    init(file: String) {
+        let fileIO = FileIO(file)
+        self = .executable(fileIO)
+    }
 }
 
 /// Convenience extension.

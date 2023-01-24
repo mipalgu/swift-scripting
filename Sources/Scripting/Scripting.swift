@@ -18,3 +18,12 @@ extension Errno {
     @usableFromInline
     static var alreadyInProgress = Errno.alreadyInProcess
 }
+
+/// Marker type for an I/O Handle.
+public protocol IOHandle {}
+
+/// A `FileHandle` is an `IOHandle`.
+extension FileHandle: IOHandle {}
+
+/// A `Pipe` is an `IOHandle`.
+extension Pipe: IOHandle {}

@@ -30,12 +30,27 @@ public final class ShellCommand {
     public var isRunning = false
     /// The underlying process to run.
     @usableFromInline var process = Process()
-    /// The standard input pipe for the Process
-    @usableFromInline var standardInput: Pipe?
-    /// The standard output pipe for the Process
-    @usableFromInline var standardOutput: Pipe?
-    /// The standard error pipe for the Process
-    @usableFromInline var standardError: Pipe?
+    /// The standard input handle for the Process
+    @usableFromInline var standardInput: IOHandle?
+    /// The standard output handle for the Process
+    @usableFromInline var standardOutput: IOHandle?
+    /// The standard error handle for the Process
+    @usableFromInline var standardError: IOHandle?
+    /// The standard input pipe for the Process.
+    @usableFromInline var inputPipe: Pipe? {
+        get { return standardInput as? Pipe }
+        set { standardInput = newValue }
+    }
+    /// The standard input pipe for the Process.
+    @usableFromInline var outputPipe: Pipe? {
+        get { return standardOutput as? Pipe }
+        set { standardOutput = newValue }
+    }
+    /// The standard error pipe for the Process.
+    @usableFromInline var errorPipe: Pipe? {
+        get { return standardError as? Pipe }
+        set { standardError = newValue }
+    }
     /// Process input handler.
     ///
     /// This handler runs in the background and is called whenever
@@ -110,7 +125,8 @@ public final class ShellCommand {
         if let pipe = standardInput {
             process.standardInput = pipe
         }
-        if let pipe = standardOutput {
+        process.standardOutput = standardOutput
+        if let pipe = outputPipe {
             if let outputHandler = outputHandler {
                 pipe.fileHandleForReading.readabilityHandler = { fileHandle in
                     let data = fileHandle.availableData
@@ -119,9 +135,9 @@ public final class ShellCommand {
                     }
                 }
             }
-            process.standardOutput = pipe
         }
-        if let pipe = standardError {
+        process.standardError = standardError
+        if let pipe = errorPipe {
             if let errorHandler = errorHandler {
                 pipe.fileHandleForReading.readabilityHandler = { fileHandle in
                     let data = fileHandle.availableData
@@ -130,7 +146,6 @@ public final class ShellCommand {
                     }
                 }
             }
-            process.standardError = pipe
         }
     }
 }
@@ -182,7 +197,7 @@ extension ShellCommand: Executable {
             do {
                 try launch()
                 if let inputHandler = inputHandler,
-                   let stdin = standardInput?.fileHandleForWriting {
+                   let stdin = inputPipe?.fileHandleForWriting {
                     Task.detached {
                         defer { try? stdin.close() }
                         while let data = try await inputHandler() {
@@ -202,7 +217,7 @@ extension ShellCommand: Executable {
         terminationStatus = process.terminationStatus
         terminationReason = process.terminationReason
         if let outputHandler = self.outputHandler,
-           let fileHandle = standardOutput?.fileHandleForReading {
+           let fileHandle = outputPipe?.fileHandleForReading {
             let data: Data?
             if #available(macOS 10.15.4, *) {
                 data = try fileHandle.readToEnd()
@@ -214,7 +229,7 @@ extension ShellCommand: Executable {
             }
         }
         if let errorHandler = self.errorHandler,
-           let fileHandle = standardError?.fileHandleForReading {
+           let fileHandle = errorPipe?.fileHandleForReading {
             let data: Data?
             if #available(macOS 10.15.4, *) {
                 data = try fileHandle.readToEnd()

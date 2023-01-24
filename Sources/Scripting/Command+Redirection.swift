@@ -5,6 +5,7 @@
 //  Created by Rene Hexel on 20/1/2023.
 //
 import Foundation
+import SystemPackage
 
 infix operator >&
 infix operator >>&
@@ -182,6 +183,32 @@ public extension Command {
             outputString += string
         }
         return result
+    }
+
+    /// Run the given shell command and redirect its output
+    /// to the given file.
+    ///
+    /// - Parameters:
+    ///   - command: The command to execute.
+    ///   - outputFile: The file that should be filled with the output of the command.
+    /// - Returns: The result of executing the command.
+    @discardableResult
+    static func > (_ command: Command, _ outputFile: FileIO) async -> Command {
+        switch command {
+        case .error(_):
+            return command
+        case let .executable(executable):
+            guard let shellCommand = executable as? ShellCommand else { return .error(Errno.notSupported) }
+            do {
+                try outputFile.open(mode: .write)
+                guard let handle = outputFile.handle else { return .error(Errno.noSuchFileOrDirectory) }
+                shellCommand.standardOutput = handle
+                try await command.run()
+            } catch {
+                return .error(error)
+            }
+        }
+        return command
     }
 
     /// Run the given shell command and redirect its output

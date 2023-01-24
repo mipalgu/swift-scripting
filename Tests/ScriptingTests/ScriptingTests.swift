@@ -38,4 +38,25 @@ final class ScriptingTests: XCTestCase {
         await "echo no" | "sed -e s/no/yes/" | "cat" > string
         XCTAssertEqual(string, "yes\n")
     }
+
+    func testFileOutput() async throws {
+        let tmpURL = FileManager.default.temporaryDirectory
+        let file = UUID().description
+        let fileURL: URL
+#if os(Linux)
+        fileURL = tmpURL.appendingPathComponent(file, isDirectory: false)
+#else
+        if #available(macOS 13.0, *) {
+            fileURL = tmpURL.appending(path: file, directoryHint: .notDirectory)
+        } else {
+            fileURL = tmpURL.appendingPathComponent(file, isDirectory: false)
+        }
+#endif
+        let outputFile = FileIO(fileURL)
+        await "echo hello" > outputFile
+        try? outputFile.handle?.close()
+        let contentData = try? Data(contentsOf: fileURL, options: .mappedIfSafe)
+        let stringContent = contentData.flatMap { String(data: $0, encoding: .utf8) }
+        XCTAssertEqual(stringContent, "hello\n")
+    }
 }
