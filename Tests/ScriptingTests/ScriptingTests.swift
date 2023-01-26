@@ -39,6 +39,12 @@ final class ScriptingTests: XCTestCase {
         XCTAssertEqual(string, "yes\n")
     }
 
+    func testTripePipe() async throws {
+        var string = String()
+        await "echo no no" | "wc" | "cat -n" | "sed -e 's/[ \t][ \t]*/ /g' -e 's/^  *//'" > string
+        XCTAssertEqual(string, "1 1 2 6\n")
+    }
+
     func testFileOutputStringLiteral() async throws {
         defer { try? FileManager.default.removeItem(atPath: "/tmp/scriptingTestFile") }
         await "echo hello" > "/tmp/scriptingTestFile"
