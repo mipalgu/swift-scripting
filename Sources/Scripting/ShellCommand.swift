@@ -212,7 +212,7 @@ extension ShellCommand: Executable {
             }
         }
 #if os(Linux)
-        await Task.yield()
+        try? await Task.sleep(nanoseconds: 1)
 #endif
         process.waitUntilExit()
         terminationStatus = process.terminationStatus
