@@ -122,7 +122,7 @@ public final class ShellCommand {
                 try? self?.setupProcess()
             }
         }
-        process.standardInput = pipe
+        process.standardInput = standardInput
         process.standardOutput = standardOutput
         if let pipe = outputPipe {
             if let outputHandler = outputHandler {

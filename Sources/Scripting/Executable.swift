@@ -69,18 +69,78 @@ public protocol Executable {
 
 /// Default implementation of convenience methods
 public extension Executable {
-    /// Set up a callback providing the given input data.
+    /// Set up standard input redirection from the given input data.
     ///
     /// - Parameter input: The input data to provide.
     /// - Returns: The receiver.
     @inlinable @discardableResult
-    func provide(input: Data) -> Self {
+    func redirectInput(from input: Data) -> Self {
         var inputData: Data? = input
         onInput {
             defer { inputData = nil }
             return inputData
         }
         return self
+    }
+    /// Set up standard input redirection from the given input file.
+    ///
+    /// - Parameter input: The input file to redirect `stdin` from.
+    /// - Returns: The receiver.
+    @inlinable @discardableResult
+    func redirectInput(from inputFile: FileIO) throws -> Self {
+        try inputFile.open(mode: .read)
+        guard let handle = inputFile.handle else { throw Errno.noSuchFileOrDirectory }
+        var this = self
+        this.standardInput = handle
+        return this
+    }
+    /// Set up standard output redirection to the given file.
+    ///
+    /// - Parameter outputFile: The output file to append to.
+    /// - Returns: The receiver.
+    @inlinable @discardableResult
+    func redirectOutput(to outputFile: FileIO) throws -> Self {
+        try outputFile.open(mode: .write)
+        guard let handle = outputFile.handle else { throw Errno.noSuchFileOrDirectory }
+        var this = self
+        this.standardOutput = handle
+        return this
+    }
+    /// Set up standard error redirection to the given file.
+    ///
+    /// - Parameter outputFile: The output file to append to.
+    /// - Returns: The receiver.
+    @inlinable @discardableResult
+    func redirectErrorOutput(to outputFile: FileIO) throws -> Self {
+        try outputFile.open(mode: .write)
+        guard let handle = outputFile.handle else { throw Errno.noSuchFileOrDirectory }
+        var this = self
+        this.standardError = handle
+        return this
+    }
+    /// Set up standard output redirection, appending to the given file.
+    ///
+    /// - Parameter outputFile: The output data to append to.
+    /// - Returns: The receiver.
+    @inlinable @discardableResult
+    func appendOutput(to outputFile: FileIO) throws -> Self {
+        try outputFile.open(mode: .append)
+        guard let handle = outputFile.handle else { throw Errno.noSuchFileOrDirectory }
+        var this = self
+        this.standardOutput = handle
+        return this
+    }
+    /// Set up standard error redirection, appending to the given file.
+    ///
+    /// - Parameter outputFile: The output data to append to.
+    /// - Returns: The receiver.
+    @inlinable @discardableResult
+    func appendErrorOutput(to outputFile: FileIO) throws -> Self {
+        try outputFile.open(mode: .append)
+        guard let handle = outputFile.handle else { throw Errno.noSuchFileOrDirectory }
+        var this = self
+        this.standardError = handle
+        return this
     }
     /// Run, returning both standad output and standard error data.
     ///
@@ -147,7 +207,7 @@ public extension Executable {
     /// - Parameter input: The input to provide.
     @inlinable
     func provide(input: String) throws -> Self {
-        try fromString(input, provide(input:))
+        try fromString(input, redirectInput(from:))
     }
     /// Run, returning both standad output and standard error data as a string.
     ///

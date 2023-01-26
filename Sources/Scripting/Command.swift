@@ -51,6 +51,80 @@ public extension Command {
         let fileIO = FileIO(file)
         self = .executable(fileIO)
     }
+
+    /// Synchronously perform an action.
+    ///
+    /// This method will perform the provided action
+    /// only if the command is not in an error state.
+    /// If the command in in an error state, it will simply
+    /// pass through the error.
+    ///
+    /// - Parameter action: The action to perform.
+    @inlinable
+    func perform(_ action: (Executable) throws -> Void) -> Self {
+        guard case let .executable(command) = self else { return self }
+        do {
+            try action(command)
+        } catch {
+            return .error(error)
+        }
+        return self
+    }
+
+    /// Synchronously perform an action.
+    ///
+    /// This method will perform the provided action
+    /// only if the command is not in an error state.
+    /// If the command in in an error state, it will simply
+    /// pass through the error.
+    ///
+    /// - Parameter action: The action to perform.
+    @inlinable
+    func perform(_ action: (Executable) throws -> Self) -> Self {
+        guard case let .executable(command) = self else { return self }
+        do {
+            return try action(command)
+        } catch {
+            return .error(error)
+        }
+    }
+
+    /// Asynchronously perform an action.
+    ///
+    /// This method will perform the provided action
+    /// only if the command is not in an error state.
+    /// If the command in in an error state, it will simply
+    /// pass through the error.
+    ///
+    /// - Parameter action: The action to perform.
+    @inlinable
+    func perform(_ action: (Executable) async throws -> Void) async -> Self {
+        guard case let .executable(command) = self else { return self }
+        do {
+            try await action(command)
+        } catch {
+            return .error(error)
+        }
+        return self
+    }
+
+    /// Asynchronously perform an action.
+    ///
+    /// This method will perform the provided action
+    /// only if the command is not in an error state.
+    /// If the command in in an error state, it will simply
+    /// pass through the error.
+    ///
+    /// - Parameter action: The action to perform.
+    @inlinable
+    func perform(_ action: (Executable) async throws -> Self) async -> Self {
+        guard case let .executable(command) = self else { return self }
+        do {
+            return try await action(command)
+        } catch {
+            return .error(error)
+        }
+    }
 }
 
 /// Convenience extension.

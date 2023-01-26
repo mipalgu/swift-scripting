@@ -55,6 +55,6 @@ public extension Command {
     @discardableResult
     static func | (_ inputData: Data, _ command: Command) async -> Command {
         if case .error(_) = command { return command }
-        return command.provide(input: inputData)
+        return command.redirectInput(from: inputData)
     }
 }
