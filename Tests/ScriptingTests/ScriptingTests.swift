@@ -53,6 +53,14 @@ final class ScriptingTests: XCTestCase {
         XCTAssertEqual(stringContent, "hello\n")
     }
 
+    func testFilePipeStringLiteral() async throws {
+        defer { try? FileManager.default.removeItem(atPath: "/tmp/scriptingCatTestFile") }
+        await "echo hello" | "cat" > "/tmp/scriptingCatTestFile"
+        let contentData = try? NSData(contentsOfFile: "/tmp/scriptingCatTestFile") as Data
+        let stringContent = contentData.flatMap { String(data: $0, encoding: .utf8) }
+        XCTAssertEqual(stringContent, "hello\n")
+    }
+
     func testFileOutput() async throws {
         let tmpURL = FileManager.default.temporaryDirectory
         let file = UUID().description
