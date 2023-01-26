@@ -87,12 +87,12 @@ public final class FileIO {
         switch mode {
         case .read:
             guard inputHandler == nil else {
-                throw record(error: Errno.badFileTypeOrFormat)
+                throw record(error: Errno.badFileDescriptor)
             }
             handle = try FileHandle(forReadingFrom: fileURL)
         default:
             guard outputHandler == nil else {
-                throw record(error: Errno.badFileTypeOrFormat)
+                throw record(error: Errno.badFileDescriptor)
             }
             print("File: '\(path.string)' exists: \(fm.fileExists(atPath: path.string))")
             guard fm.fileExists(atPath: path.string) ||
