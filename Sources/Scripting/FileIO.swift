@@ -94,12 +94,10 @@ public final class FileIO {
             guard outputHandler == nil else {
                 throw record(error: Errno.badFileDescriptor)
             }
-            print("File: '\(path.string)' exists: \(fm.fileExists(atPath: path.string))")
             guard fm.fileExists(atPath: path.string) ||
                   fm.createFile(atPath: path.string, contents: Data()) else {
                 throw Errno(rawValue: CInt(errno))
             }
-            print("File: '\(path.string)' exists: \(fm.fileExists(atPath: path.string)), opening \(fileURL)")
             handle = try FileHandle(forWritingTo: fileURL)
             if case .append = mode {
                 if #available(macOS 10.15.4, *) {
