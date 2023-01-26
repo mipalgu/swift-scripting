@@ -211,6 +211,9 @@ extension ShellCommand: Executable {
                 continuation.resume(throwing: error)
             }
         }
+#if os(Linux)
+        try? await Task.yield()
+#endif
         process.waitUntilExit()
         terminationStatus = process.terminationStatus
         terminationReason = process.terminationReason
