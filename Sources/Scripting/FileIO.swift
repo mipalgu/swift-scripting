@@ -7,9 +7,9 @@
 import Foundation
 import SystemPackage
 
-/// An actor representing file operations.
+/// A type representing file operations.
 ///
-/// This actor allows reading or writing
+/// The `FileIO` type allows reading or writing
 /// of files.  It behaves like an executable,
 /// whose only purpose is file I/O.
 public final class FileIO {
