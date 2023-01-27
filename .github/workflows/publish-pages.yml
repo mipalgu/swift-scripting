@@ -35,6 +35,7 @@ jobs:
             --transform-for-static-hosting				\
             --hosting-base-path swift-scripting				\
             --output-path docs
+          echo "<script>window.location.href += \"/documentation/scripting\"</script>" > docs/index.html
       - name: Upload artefacts
         uses: actions/upload-pages-artifact@v1
         with:
