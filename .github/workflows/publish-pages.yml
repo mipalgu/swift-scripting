@@ -14,9 +14,10 @@ concurrency:
 # Single deploy job since we're just deploying
 jobs:
   deploy:
-    # Must be set to this for deploying to GitHub Pages
-    name: github-pages
-    url: ${{ steps.deployment.outputs.page_url }}
+    environment:
+      # Must be set to this for deploying to GitHub Pages
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
   runs-on: ubuntu-22.04
   steps:
     - uses: swift-actions/setup-swift@v1

@@ -1,4 +1,4 @@
-name: Build and test with Swift-${{ matrix.swift }} on ${{ matrix.os }}
+name: Build and test
 
 on:
   push:
@@ -8,13 +8,12 @@ on:
 
 jobs:
   build:
-
-    runs-on: ${{ matrix.os }}
+    name: Build and test with Swift-${{ matrix.swift }} on ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
         swift: ["5.7"]
-
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: swift-actions/setup-swift@v1
       with:
@@ -23,6 +22,6 @@ jobs:
       run: swift --version
     - uses: actions/checkout@v3
     - name: Build
-      run: swift build -v
+      run: swift build
     - name: Run tests
-      run: swift test -v
+      run: swift test
