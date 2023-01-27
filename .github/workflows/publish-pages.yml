@@ -19,6 +19,11 @@ jobs:
     url: ${{ steps.deployment.outputs.page_url }}
   runs-on: ubuntu-22.04
   steps:
+    - uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: '5.7'
+    - name: Print swift version
+      run: swift --version
     - name: Checkout
       uses: actions/checkout@v3
     - name: Build DocC
