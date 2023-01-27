@@ -33,7 +33,7 @@ jobs:
             generate-documentation --target Scripting			\
             --disable-indexing						\
             --transform-for-static-hosting				\
-            --hosting-base-path scripting				\
+            --hosting-base-path swift-scripting				\
             --output-path docs
       - name: Upload artefacts
         uses: actions/upload-pages-artifact@v1
