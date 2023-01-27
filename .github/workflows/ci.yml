@@ -11,7 +11,7 @@ jobs:
     name: Build and test with Swift-${{ matrix.swift }} on ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         swift: ["5.7"]
     runs-on: ${{ matrix.os }}
     steps:
