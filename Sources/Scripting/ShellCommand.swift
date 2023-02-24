@@ -104,6 +104,17 @@ public final class ShellCommand {
         }
     }
 
+    /// Terminate the running executable.
+    ///
+    /// This function will try its best to terminate
+    /// the underlying executable.  There is no
+    /// guarantee that this will be successful.
+    @inlinable
+    public func terminate() {
+        guard isRunning else { return }
+        process.terminate()
+    }
+
     /// Set up the process for the shell.
     public func setupProcess() throws {
         guard !isRunning else { throw Errno.alreadyInProgress }

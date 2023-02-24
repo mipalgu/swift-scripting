@@ -209,6 +209,20 @@ extension Command: Executable {
             return try await executable.run()
         }
     }
+
+    /// Terminate the running executable.
+    ///
+    /// This function will try its best to terminate
+    /// the underlying executable.  There is no
+    /// guarantee that this will be successful.
+    @inlinable
+    public func terminate() {
+        guard case let .executable(command) = self else { return }
+        if let shellCommand = command as? ShellCommand {
+            shellCommand.terminate()
+        }
+    }
+
     /// Register an input handler.
     ///
     /// The input handler is asynchronous

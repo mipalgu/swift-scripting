@@ -278,3 +278,29 @@ extension FileIO: ExpressibleByStringLiteral {
         self.init(filePath)
     }
 }
+
+public extension FileIO {
+    /// Return a file handle to standard input.
+    static var standardInput: FileIO {
+        var fileIO = FileIO(path: "/dev/stdin")
+        fileIO.handle = FileHandle.standardInput
+        fileIO.mode = .read
+        return fileIO
+    }
+    
+    /// Return a file handle to standard output.
+    static var standardOutput: FileIO {
+        var fileIO = FileIO(path: "/dev/stdout")
+        fileIO.handle = FileHandle.standardOutput
+        fileIO.mode = .write
+        return fileIO
+    }
+    
+    /// Return a file handle to standard error..
+    static var standardError: FileIO {
+        var fileIO = FileIO(path: "/dev/stderr")
+        fileIO.handle = FileHandle.standardError
+        fileIO.mode = .write
+        return fileIO
+    }
+}

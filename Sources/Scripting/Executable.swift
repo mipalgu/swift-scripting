@@ -29,6 +29,12 @@ public protocol Executable {
     /// - Returns: The completion status.
     @discardableResult
     func run() async throws -> Status
+    /// Terminate the running executable.
+    ///
+    /// This function will try its best to terminate
+    /// the underlying executable.  There is no
+    /// guarantee that this will be successful.
+    func terminate()
     /// Register an input handler.
     ///
     /// The input handler is asynchronous
@@ -69,6 +75,10 @@ public protocol Executable {
 
 /// Default implementation of convenience methods
 public extension Executable {
+    /// Terminate the running executable.
+    ///
+    /// This default implementation will do nothing.
+    func terminate() {}
     /// Set up standard input redirection from the given input data.
     ///
     /// - Parameter input: The input data to provide.
