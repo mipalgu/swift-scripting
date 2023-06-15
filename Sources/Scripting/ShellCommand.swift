@@ -123,9 +123,10 @@ public final class ShellCommand {
     /// process fails to terminate through conventional
     /// means.
     @inlinable
-    public func interrupt() {
-        guard isRunning else { return }
+    public func interrupt() -> Bool {
+        guard isRunning else { return false }
         process.interrupt()
+        return true
     }
 
     /// Set up the process for the shell.

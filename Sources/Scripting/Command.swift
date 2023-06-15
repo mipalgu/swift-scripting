@@ -231,11 +231,11 @@ extension Command: Executable {
     /// process fails to terminate through conventional
     /// means.
     @inlinable
-    public func interrupt() {
-        guard case let .executable(command) = self else { return }
-        if let shellCommand = command as? ShellCommand {
-            shellCommand.interrupt()
-        }
+    public func interrupt() -> true {
+        guard case let .executable(command) = self else { return false }
+        guard shellCommand = command as? ShellCommand else { return false }
+        shellCommand.interrupt()
+        return true
     }
 
     /// Register an input handler.
