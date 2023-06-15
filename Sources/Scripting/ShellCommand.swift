@@ -115,6 +115,19 @@ public final class ShellCommand {
         process.terminate()
     }
 
+    /// Terminate the running executable via Interrupt.
+    ///
+    /// This function will trigger an interrupt with a
+    /// default behaviour of terminating the process.
+    /// This was implemented as a fail safe incase the
+    /// process fails to terminate through conventional
+    /// means.
+    @inlinable
+    public func interrupt() {
+        guard isRunning else { return }
+        process.interrupt()
+    }
+
     /// Set up the process for the shell.
     public func setupProcess() throws {
         guard !isRunning else { throw Errno.alreadyInProgress }
