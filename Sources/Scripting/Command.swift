@@ -223,6 +223,21 @@ extension Command: Executable {
         }
     }
 
+    /// Terminate the running executable via Interrupt.
+    ///
+    /// This function will trigger an interrupt with a
+    /// default behaviour of terminating the process.
+    /// This was implemented as a fail safe incase the
+    /// process fails to terminate through conventional
+    /// means.
+    @inlinable
+    public func interrupt() {
+        guard case let .executable(command) = self else { return }
+        if let shellCommand = command as? ShellCommand {
+            shellCommand.interrupt()
+        }
+    }
+
     /// Register an input handler.
     ///
     /// The input handler is asynchronous
