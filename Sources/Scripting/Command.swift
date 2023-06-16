@@ -231,9 +231,9 @@ extension Command: Executable {
     /// process fails to terminate through conventional
     /// means.
     @inlinable
-    public func interrupt() -> true {
+    public func interrupt() -> Bool {
         guard case let .executable(command) = self else { return false }
-        guard shellCommand = command as? ShellCommand else { return false }
+        guard let shellCommand = command as? ShellCommand else { return false }
         shellCommand.interrupt()
         return true
     }
