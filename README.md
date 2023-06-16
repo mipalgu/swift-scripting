@@ -15,5 +15,5 @@ Here are some examples:
 await "echo hello"
 await "echo hello" > "outputfile.txt"
 await "echo hello" | "cat -n" > "outputfile.txt"
-await "echo $PATH" | #"tr ':' '\n'"# "cat -n" > "outputfile.txt"
+await "echo $PATH" | #"tr ':' '\n'"# | "cat -n" > "outputfile.txt"
 ```
