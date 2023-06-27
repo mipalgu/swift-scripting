@@ -234,8 +234,7 @@ extension Command: Executable {
     public func interrupt() -> Bool {
         guard case let .executable(command) = self else { return false }
         guard let shellCommand = command as? ShellCommand else { return false }
-        shellCommand.interrupt()
-        return true
+        return shellCommand.interrupt()
     }
 
     /// Register an input handler.
