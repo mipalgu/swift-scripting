@@ -19,6 +19,20 @@ final class ShellCommandTests: XCTestCase {
 
     }
 
+    struct CommandError: Error {
+
+    }
+
+    func testCommandInterruptExecutableFail() throws {
+        let command: Command = .error(CommandError.init())
+        XCTAssertFalse(command.interrupt())
+    }
+
+    func testCommandInterruptShellCommandFail() throws {
+        let command = Command(file: "hello")
+        XCTAssertFalse(command.interrupt())
+    }
+
     func testInterruptIsSentToShellCommand() async throws {
         // Create a new script.
         let sleepAmount = 10
