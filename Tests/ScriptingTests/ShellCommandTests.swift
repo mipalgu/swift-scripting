@@ -21,59 +21,27 @@ final class ShellCommandTests: XCTestCase {
 
     func testInterruptIsSentToShellCommand() async throws {
         // Create a new script.
-        let path = "/tmp/\(UUID())"
-        let sleepAmount = 60
-        let contents = """
-            #! /bin/sh
-
-            function sigint_handler() {
-                exit 0
-            }
-
-            trap 'sigint_handler' SIGINT
-            echo "start"
-            counter=0
-            while [ $counter -le \(sleepAmount) ]
-            do
-                sleep 1
-                ((counter++))
-            done
-            exit 1
-            """
-        guard let filePath = try createFile(named: "process.sh", contents: contents, inDirectory: path) else {
-            return
-        }
-        defer {
-            let fm = FileManager.default
-            try? fm.removeItem(atPath: filePath)
-            try? fm.removeItem(atPath: path)
-        }
-        // Setup the command to run.
-        let sharedData = SharedData()
-        let command = Command(filePath)
-        command.onOutput {
-            guard
-                let str = String(data: $0, encoding: .utf8),
-                str.trimmingCharacters(in: .whitespacesAndNewlines) == "start"
-            else {
-                return
-            }
-            await sharedData.setTrue()
-        }
+        let sleepAmount = 10
         let shouldEnd = SharedData()
         // Run the command on a separate thread and wait for it to exit.
+        let command: Command = "/usr/bin/cat"
         Task {
             async let result = command.run()
-            for _ in 0..<(sleepAmount * 10) {
-                if await sharedData.shouldContinue {
+            guard
+                case Command.executable(let executable) = command,
+                let shellCommand = executable as? ShellCommand
+            else {
+                XCTFail("command is not a ShellCommand")
+                return
+            }
+            for _ in 0..<sleepAmount * 10 {
+                if shellCommand.isRunning {
                     break
                 }
                 usleep(100000)
             }
-            guard await sharedData.shouldContinue else {
-                command.terminate()
-                XCTFail("Start message was never received.")
-                await shouldEnd.setTrue()
+            guard shellCommand.isRunning else {
+                XCTFail("shell command is not running.")
                 return
             }
             XCTAssertTrue(command.interrupt())
@@ -82,7 +50,7 @@ final class ShellCommandTests: XCTestCase {
             await shouldEnd.setTrue()
         }
         // Periodically check to see if the command has finished executing, or time out.
-        for _ in 0..<sleepAmount * 10 {
+        for _ in 0..<sleepAmount * 20 {
             if await shouldEnd.shouldContinue {
                 break
             }

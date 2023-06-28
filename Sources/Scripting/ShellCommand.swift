@@ -124,7 +124,11 @@ public final class ShellCommand {
     /// means.
     @inlinable
     public func interrupt() -> Bool {
-        guard isRunning else { return false }
+        guard isRunning else {
+            print("is not running")
+            fflush(stdout)
+            return false
+        }
         process.interrupt()
         return true
     }
