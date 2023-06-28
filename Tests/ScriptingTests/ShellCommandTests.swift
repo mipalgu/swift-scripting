@@ -38,7 +38,11 @@ final class ShellCommandTests: XCTestCase {
         let sleepAmount = 10
         let shouldEnd = SharedData()
         // Run the command on a separate thread and wait for it to exit.
+        #if os(macOS)
+        let command: Command = "/bin/cat"
+        #else
         let command: Command = "/usr/bin/cat"
+        #endif
         Task {
             async let result = command.run()
             guard
